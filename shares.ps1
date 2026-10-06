@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 
 Clear-Host
 $Host.UI.RawUI.WindowTitle = "Map Media Network Drives"
@@ -168,39 +168,31 @@ if($Failed -gt 0)
 }
 
 # ------------------------------------------------------------
-# Import custom drive icons
+# Import custom drive icons (current user - no administrator rights required)
 # ------------------------------------------------------------
 
 $RegFile = Join-Path $ScriptDir "Drive_Icons.reg"
 
-Write-Host ""
-Write-Host "Looking for reg file at:" -ForegroundColor DarkGray
-Write-Host $RegFile -ForegroundColor DarkGray
-
 if (Test-Path $RegFile)
 {
     Write-Host ""
-    Write-Host "Importing drive icons..." -ForegroundColor Cyan
+    Write-Host "Applying drive icons..." -ForegroundColor Cyan
 
-    $Result = Start-Process `
-        -FilePath "reg.exe" `
-        -ArgumentList "import `"$RegFile`"" `
-        -Wait `
-        -PassThru `
-        -NoNewWindow
+    # Import silently. The corrected REG file uses HKEY_CURRENT_USER.
+    & reg.exe import "$RegFile" *> $null
+    $RegExitCode = $LASTEXITCODE
 
-    if ($Result.ExitCode -eq 0)
+    if ($RegExitCode -eq 0)
     {
-        Write-Host "Drive icons imported successfully." -ForegroundColor Green
+        Write-Host "Drive icons applied successfully." -ForegroundColor Green
 
-        Write-Host "Refreshing Explorer..." -ForegroundColor Cyan
-
+        # Refresh Explorer so the icons appear.
         Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
         Start-Process explorer.exe
     }
     else
     {
-        Write-Host "Failed to import Drive_Icons.reg." -ForegroundColor Red
+        Write-Host "Failed to apply drive icons. Registry import returned code $RegExitCode." -ForegroundColor Red
     }
 }
 else

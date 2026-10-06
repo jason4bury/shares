@@ -11,6 +11,11 @@ All notable changes to this project are documented here.
 - `README.md` and `.gitignore` for the repo.
 
 ### Changed
+- `Drive_Icons.reg` now uses `HKEY_CURRENT_USER` instead of
+  `HKEY_LOCAL_MACHINE`, allowing custom drive icons to be applied without
+  administrator rights or a UAC prompt.
+- `shares.ps1` now imports `Drive_Icons.reg` silently and refreshes Explorer
+  after a successful import so the custom drive icons appear immediately.
 - `Drive_Icons.reg` is now tracked in the repo (removed from `.gitignore`)
   and included in `README.md`'s file list, rather than being treated as a
   local-only file.
@@ -19,6 +24,9 @@ All notable changes to this project are documented here.
   so the script is safe to commit to source control.
 
 ### Fixed
+- Fixed `ERROR: Error accessing the registry.` when `shares.ps1` runs at
+  startup via the non-elevated scheduled task.
+- Removed the need to manually merge `Drive_Icons.reg` as Administrator.
 - `Setup-AutoMapTask.ps1` scheduled task reverted to running **non-elevated**.
   Running it elevated caused drives to be mapped into a separate elevated
   logon session, making them invisible in normal Explorer windows, and

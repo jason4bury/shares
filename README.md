@@ -10,14 +10,13 @@ reconnected reliably across reboots, and optionally apply custom drive icons.
   credentials are stored in this repo.
 - **shares.ps1** — deletes and re-creates the mapped drives listed in
   `$Mappings`, retrying automatically if Windows hasn't released a drive
-  letter yet. Also imports `Drive_Icons.reg` silently if present and refreshes
-  Explorer so the custom icons are applied immediately.
+  letter yet. Also imports `Drive_Icons.reg` if present (needs admin rights
+  — see note below).
 - **Setup-AutoMapTask.ps1** — run once, as Administrator. Registers a
   Scheduled Task that runs `shares.ps1` ~30 seconds after logon. This works
   around Windows' unreliable built-in "reconnect persistent network drives
   at logon" behaviour for non-domain NAS shares.
-- **Drive_Icons.reg** — optional custom icons for the mapped drives. The
-  entries use `HKEY_CURRENT_USER`, so administrator rights are not required.
+- **Drive_Icons.reg** — optional custom icons for the mapped drives.
 
 ## Setup order
 
@@ -37,11 +36,9 @@ reconnected reliably across reboots, and optionally apply custom drive icons.
 - The Scheduled Task created by `Setup-AutoMapTask.ps1` runs **non-elevated**
   on purpose. If it ran elevated, drives would map into a separate
   "elevated" logon session and be invisible to normal Explorer windows.
-- `Drive_Icons.reg` now writes its drive-icon settings to `HKEY_CURRENT_USER`.
-  This allows `shares.ps1` to import the icons automatically from the
-  non-elevated scheduled task without an administrator/UAC prompt.
-- Registry import output is suppressed during startup. After a successful
-  import, Explorer is refreshed so the custom drive icons appear immediately.
+  As a result, the `Drive_Icons.reg` import step in `shares.ps1` will fail
+  silently when run via the task (harmless) — import that `.reg` file
+  manually, once, via right-click → Merge, if you want custom icons.
 - If a drive fails to map, check the auto-generated
   `MapMediaShares_<timestamp>.log` file next to the script for the exact
   `net use` error.

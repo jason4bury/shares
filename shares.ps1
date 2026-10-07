@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 
 Clear-Host
 $Host.UI.RawUI.WindowTitle = "Map Media Network Drives"
@@ -69,10 +69,12 @@ foreach($M in $Mappings)
 
         Start-Sleep -Milliseconds 500
 
-        # If the drive letter no longer shows up in `net use`, it's free
-        $StillMapped = (cmd /c "net use $Drive" 2>&1) -join ' '
+        # `net use <drive>:` returns a non-zero exit code when the drive
+        # isn't mapped. Checking the exit code (rather than matching the
+        # error text) works regardless of Windows language/wording.
+        cmd /c "net use $Drive >nul 2>&1"
 
-        if ($StillMapped -match "not.*(a|an).*(network|valid)|not found|no such")
+        if ($LASTEXITCODE -ne 0)
         {
             $Released = $true
         }
@@ -168,31 +170,39 @@ if($Failed -gt 0)
 }
 
 # ------------------------------------------------------------
-# Import custom drive icons (current user - no administrator rights required)
+# Import custom drive icons
 # ------------------------------------------------------------
 
 $RegFile = Join-Path $ScriptDir "Drive_Icons.reg"
 
+Write-Host ""
+Write-Host "Looking for reg file at:" -ForegroundColor DarkGray
+Write-Host $RegFile -ForegroundColor DarkGray
+
 if (Test-Path $RegFile)
 {
     Write-Host ""
-    Write-Host "Applying drive icons..." -ForegroundColor Cyan
+    Write-Host "Importing drive icons..." -ForegroundColor Cyan
 
-    # Import silently. The corrected REG file uses HKEY_CURRENT_USER.
-    & reg.exe import "$RegFile" *> $null
-    $RegExitCode = $LASTEXITCODE
+    $Result = Start-Process `
+        -FilePath "reg.exe" `
+        -ArgumentList "import `"$RegFile`"" `
+        -Wait `
+        -PassThru `
+        -NoNewWindow
 
-    if ($RegExitCode -eq 0)
+    if ($Result.ExitCode -eq 0)
     {
-        Write-Host "Drive icons applied successfully." -ForegroundColor Green
+        Write-Host "Drive icons imported successfully." -ForegroundColor Green
 
-        # Refresh Explorer so the icons appear.
+        Write-Host "Refreshing Explorer..." -ForegroundColor Cyan
+
         Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
         Start-Process explorer.exe
     }
     else
     {
-        Write-Host "Failed to apply drive icons. Registry import returned code $RegExitCode." -ForegroundColor Red
+        Write-Host "Failed to import Drive_Icons.reg." -ForegroundColor Red
     }
 }
 else

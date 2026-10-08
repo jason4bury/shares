@@ -19,6 +19,10 @@ All notable changes to this project are documented here.
   so the script is safe to commit to source control.
 
 ### Fixed
+- Stray File Explorer window left open after `shares.ps1` finished: the script
+  no longer launches `explorer.exe` itself after the icon refresh, since Windows
+  restarts the shell automatically. It only starts it manually as a fallback if
+  the shell has not returned after a few seconds.
 - False "could not confirm <drive> was released" warnings: the release check in
   `shares.ps1` now uses the `net use` exit code instead of matching error
   text, so it no longer depends on exact Windows wording.

@@ -198,7 +198,17 @@ if (Test-Path $RegFile)
         Write-Host "Refreshing Explorer..." -ForegroundColor Cyan
 
         Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
-        Start-Process explorer.exe
+
+        # Windows restarts the shell (taskbar/desktop) automatically when
+        # explorer.exe is killed. Launching explorer.exe ourselves as well
+        # opens an unwanted extra File Explorer window, so only start it
+        # manually if the shell hasn't come back after a few seconds.
+        Start-Sleep -Seconds 3
+
+        if (-not (Get-Process -Name explorer -ErrorAction SilentlyContinue))
+        {
+            Start-Process explorer.exe
+        }
     }
     else
     {
